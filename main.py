@@ -1,98 +1,95 @@
-# main.py
-# Система управления командными проектами
+"""Точка запуска приложения «Система управления командными проектами»."""
+from projects import get_project_info_text, is_project_active
+from tasks import (
+    get_task_status_text,
+    count_completed_tasks,
+    calculate_progress,
+    add_task,
+)
+from storage import load_data, save_data
+from utils import input_non_empty
 
-from datetime import date
+PROJECTS_FILE = "data/projects.json"
+TASKS_FILE = "data/tasks.json"
 
-# Данные проекта
-project_name = "Разработка мобильного приложения"
-project_description = "Создание приложения для доставки еды"
-project_status = "Активен"
-start_date = date(2026, 9, 1)
-end_date = date(2026, 12, 15)
-project_manager = "Анна Петрова"
 
-# Данные участников
-member_1_name = "Иван Иванов"
-member_1_role = "Разработчик"
-member_2_name = "Мария Смирнова"
-member_2_role = "Дизайнер"
-member_3_name = "Петр Сидоров"
-member_3_role = "Тестировщик"
+def show_project(project: dict, members: list) -> None:
+    """Вывести информацию о проекте и участниках команды."""
+    print("Информация о проекте:")
+    print(get_project_info_text(project))
+    status_text = "Активен" if is_project_active(project) else "Не активен"
+    print(f"Статус: {status_text}")
+    print()
+    print("Участники команды:")
+    for index, member in enumerate(members, start=1):
+        print(f"{index}. {member['name']} - {member['role']}")
 
-# Данные задач
-task_1_name = "Дизайн интерфейса"
-task_1_status = "Выполнена"
-task_2_name = "Разработка бэкенда"
-task_2_status = "В работе"
-task_3_name = "Настройка сервера"
-task_3_status = "Новая"
 
-# Функция определения статуса задачи
-def get_task_status_text(status):
-    if status == "Выполнена":
-        return "Завершено"
-    elif status == "В работе":
-        return "В процессе"
-    elif status == "Новая":
-        return "Ожидает начала"
-    else:
-        return "Статус не определен"
+def show_tasks(tasks: list) -> None:
+    """Вывести список задач проекта."""
+    print("Задачи проекта:")
+    for index, task in enumerate(tasks, start=1):
+        status_text = get_task_status_text(task["status"])
+        print(f"{index}. {task['name']} - {status_text}")
 
-# Функция проверки активности проекта
-def is_project_active(status):
-    if status == "Активен":
-        return True
-    else:
-        return False
 
-# Подсчет выполненных задач
-completed_tasks = 0
-total_tasks = 3
+def show_progress(tasks: list) -> None:
+    """Вывести прогресс выполнения проекта."""
+    progress = calculate_progress(tasks)
+    completed = count_completed_tasks(tasks)
+    print(f"Прогресс проекта: {int(progress)}%")
+    print(f"Выполнено задач: {completed} из {len(tasks)}")
 
-if task_1_status == "Выполнена":
-    completed_tasks = completed_tasks + 1
-if task_2_status == "Выполнена":
-    completed_tasks = completed_tasks + 1
-if task_3_status == "Выполнена":
-    completed_tasks = completed_tasks + 1
 
-# Вычисление прогресса
-progress = (float(completed_tasks) / float(total_tasks)) * 100
+def add_new_task(tasks: list) -> None:
+    """Запросить данные новой задачи у пользователя и добавить её."""
+    name = input_non_empty("Название задачи: ")
+    assignee = input_non_empty("Ответственный: ")
+    add_task(tasks, name, "Новая", assignee)
+    print("Задача добавлена.")
 
-# Вывод информации
-print("СИСТЕМА УПРАВЛЕНИЯ КОМАНДНЫМИ ПРОЕКТАМИ")
-print("")
 
-print("Информация о проекте:")
-print("Название: " + project_name)
-print("Описание: " + project_description)
-print("Руководитель: " + project_manager)
-print("Дата начала: " + start_date.strftime("%d.%m.%Y"))
-print("Дата окончания: " + end_date.strftime("%d.%m.%Y"))
+def print_menu() -> None:
+    """Вывести меню приложения."""
+    print()
+    print("1. Показать информацию о проекте")
+    print("2. Показать задачи")
+    print("3. Показать прогресс проекта")
+    print("4. Добавить задачу")
+    print("0. Сохранить и выйти")
 
-if is_project_active(project_status):
-    print("Статус: Активен")
-else:
-    print("Статус: Не активен")
 
-print("")
+def main() -> None:
+    """Загрузить данные и запустить меню приложения."""
+    default_project_data = {"project": {}, "members": []}
+    project_data = load_data(PROJECTS_FILE, default_project_data)
+    tasks = load_data(TASKS_FILE, [])
 
-print("Участники команды:")
-print("1. " + member_1_name + " - " + member_1_role)
-print("2. " + member_2_name + " - " + member_2_role)
-print("3. " + member_3_name + " - " + member_3_role)
+    project = project_data["project"]
+    members = project_data["members"]
 
-print("")
+    print("СИСТЕМА УПРАВЛЕНИЯ КОМАНДНЫМИ ПРОЕКТАМИ")
 
-print("Задачи проекта:")
-print("1. " + task_1_name + " - " + get_task_status_text(task_1_status))
-print("2. " + task_2_name + " - " + get_task_status_text(task_2_status))
-print("3. " + task_3_name + " - " + get_task_status_text(task_3_status))
+    while True:
+        print_menu()
+        choice = input("Выберите действие: ").strip()
 
-print("")
+        if choice == "1":
+            show_project(project, members)
+        elif choice == "2":
+            show_tasks(tasks)
+        elif choice == "3":
+            show_progress(tasks)
+        elif choice == "4":
+            add_new_task(tasks)
+        elif choice == "0":
+            save_data(PROJECTS_FILE, project_data)
+            save_data(TASKS_FILE, tasks)
+            print("Данные сохранены. До свидания!")
+            break
+        else:
+            print("Неверный выбор, попробуйте снова.")
 
-print("Прогресс проекта: " + str(int(progress)) + "%")
-print("Выполнено задач: " + str(completed_tasks) + " из " + str(total_tasks))
 
-print("")
-print("Конец отчета")
+if __name__ == "__main__":
+    main()
