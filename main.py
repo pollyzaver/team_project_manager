@@ -1,5 +1,5 @@
 """Точка запуска приложения «Система управления командными проектами»."""
-from projects import add_member, find_member
+from projects import find_member
 from tasks import (
     add_task,
     calculate_progress,
