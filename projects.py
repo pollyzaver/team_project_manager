@@ -1,30 +1,17 @@
-"""Функции для работы с проектом и участниками команды."""
+"""Функции для работы с участниками команды."""
+from typing import List
+
+from models import Member
 
 
-def get_project_info_text(project: dict) -> str:
-    """Вернуть текстовое описание проекта."""
-    return (
-        f"Название: {project['name']}\n"
-        f"Описание: {project['description']}\n"
-        f"Руководитель: {project['manager']}\n"
-        f"Дата начала: {project['start_date']}\n"
-        f"Дата окончания: {project['end_date']}"
-    )
-
-
-def is_project_active(project: dict) -> bool:
-    """Проверить, активен ли проект."""
-    return project["status"] == "Активен"
-
-
-def add_member(members: list, name: str, role: str) -> None:
+def add_member(members: List[Member], name: str, role: str) -> None:
     """Добавить участника в список участников команды."""
-    members.append({"name": name, "role": role})
+    members.append(Member(name, role))
 
 
-def find_member(members: list, query: str) -> list:
+def find_member(members: List[Member], query: str) -> List[Member]:
     """Найти участников по подстроке имени."""
     return [
         member for member in members
-        if query.lower() in member["name"].lower()
+        if query.lower() in member.name.lower()
     ]
