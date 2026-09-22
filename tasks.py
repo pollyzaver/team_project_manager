@@ -9,9 +9,10 @@ def add_task(
     name: str,
     status: str,
     assignee: Member,
+    due_date: str = "",
 ) -> None:
     """Добавить новую задачу в список задач."""
-    tasks.append(Task(name, status, assignee))
+    tasks.append(Task(name, status, assignee, due_date))
 
 
 def count_completed_tasks(tasks: List[Task]) -> int:
@@ -39,3 +40,39 @@ def filter_tasks_by_status(tasks: List[Task], status: str) -> List[Task]:
 def sort_tasks_by_status(tasks: List[Task]) -> List[Task]:
     """Отсортировать задачи по статусу (по алфавиту)."""
     return sorted(tasks, key=lambda task: task.status)
+
+
+def sort_tasks_by_due_date(tasks: List[Task]) -> List[Task]:
+    """Отсортировать задачи по сроку выполнения.
+
+    Задачи без указанного срока уходят в конец списка.
+    """
+    return sorted(
+        tasks,
+        key=lambda task: (task.due_date == "", task.due_date),
+    )
+
+
+def update_task_status(tasks: List[Task], name: str, new_status: str) -> bool:
+    """Найти задачу по имени и изменить её статус.
+
+    Возвращает True, если задача найдена и статус обновлён,
+    иначе False.
+    """
+    for task in tasks:
+        if task.name == name:
+            task.status = new_status
+            return True
+    return False
+
+
+def delete_task(tasks: List[Task], name: str) -> bool:
+    """Удалить задачу по имени.
+
+    Возвращает True, если задача найдена и удалена, иначе False.
+    """
+    for index, task in enumerate(tasks):
+        if task.name == name:
+            del tasks[index]
+            return True
+    return False

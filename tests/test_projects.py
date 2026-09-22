@@ -1,6 +1,11 @@
-"""Тесты для класса Project, Member и функций projects.py."""
-from models import Member, Project
-from projects import add_member, find_member
+"""Тесты для классов Project, Team, Member и функций projects.py."""
+from models import Member, Project, Team
+from projects import add_member, create_project, find_member, find_project
+
+
+def make_team() -> Team:
+    """Создать тестовую команду с одним участником."""
+    return Team("Тестовая команда", [Member("Иван Иванов", "Разработчик")])
 
 
 def test_project_is_active():
@@ -11,6 +16,7 @@ def test_project_is_active():
         start_date="01.01.2026",
         end_date="01.02.2026",
         status="Активен",
+        team=make_team(),
     )
     assert project.is_active() is True
 
@@ -23,6 +29,7 @@ def test_project_is_not_active():
         start_date="01.01.2026",
         end_date="01.02.2026",
         status="Завершен",
+        team=make_team(),
     )
     assert project.is_active() is False
 
@@ -35,8 +42,26 @@ def test_project_str():
         start_date="01.01.2026",
         end_date="01.02.2026",
         status="Активен",
+        team=make_team(),
     )
     assert str(project) == "Тестовый проект (Активен)"
+
+
+def test_project_tasks_default_empty():
+    project = Project(
+        name="Тестовый проект",
+        description="Описание",
+        manager="Иван Иванов",
+        start_date="01.01.2026",
+        end_date="01.02.2026",
+        status="Активен",
+    )
+    assert project.tasks == []
+
+
+def test_team_str():
+    team = make_team()
+    assert str(team) == "Тестовая команда (1 участников)"
 
 
 def test_add_member():
@@ -56,3 +81,47 @@ def test_find_member():
     found = find_member(members, "иван")
     assert len(found) == 1
     assert found[0].name == "Иван Иванов"
+
+
+def test_create_project():
+    projects = []
+    project = create_project(
+        projects,
+        name="Новый проект",
+        description="Описание",
+        manager="Анна Петрова",
+        start_date="01.01.2027",
+        end_date="01.06.2027",
+        team_name="Новая команда",
+    )
+    assert len(projects) == 1
+    assert isinstance(project, Project)
+    assert project.status == "Активен"
+    assert project.team.name == "Новая команда"
+    assert project.team.members == []
+
+
+def test_find_project():
+    projects = [
+        Project(
+            name="Мобильное приложение",
+            description="",
+            manager="",
+            start_date="",
+            end_date="",
+            status="Активен",
+            team=make_team(),
+        ),
+        Project(
+            name="Веб-сайт",
+            description="",
+            manager="",
+            start_date="",
+            end_date="",
+            status="Активен",
+            team=make_team(),
+        ),
+    ]
+    found = find_project(projects, "мобильное")
+    assert len(found) == 1
+    assert found[0].name == "Мобильное приложение"

@@ -10,14 +10,23 @@ STATUS_TEXT = {
 class Task:
     """Задача проекта."""
 
-    def __init__(self, name: str, status: str, assignee) -> None:
+    def __init__(
+        self,
+        name: str,
+        status: str,
+        assignee,
+        due_date: str = "",
+    ) -> None:
         """Создать объект задачи.
 
         assignee — объект Member, ответственный за выполнение задачи.
+        due_date — срок выполнения в формате "ДД.ММ.ГГГГ" (может быть
+        пустой строкой, если срок не задан).
         """
         self.name = name
         self.status = status
         self.assignee = assignee
+        self.due_date = due_date
 
     def is_completed(self) -> bool:
         """Проверить, выполнена ли задача."""
@@ -29,7 +38,8 @@ class Task:
 
     def __str__(self) -> str:
         """Вернуть строковое представление задачи."""
+        due_text = f", срок: {self.due_date}" if self.due_date else ""
         return (
             f"{self.name} [{self.get_status_text()}] "
-            f"- {self.assignee.name}"
+            f"- {self.assignee.name}{due_text}"
         )

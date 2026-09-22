@@ -4,8 +4,11 @@ from tasks import (
     add_task,
     calculate_progress,
     count_completed_tasks,
+    delete_task,
     filter_tasks_by_status,
+    sort_tasks_by_due_date,
     sort_tasks_by_status,
+    update_task_status,
 )
 
 
@@ -24,6 +27,18 @@ def test_task_is_not_completed():
     assert task.is_completed() is False
 
 
+def test_task_str_without_due_date():
+    task = Task("Задача", "Новая", make_member())
+    assert str(task) == "Задача [Ожидает начала] - Иван Иванов"
+
+
+def test_task_str_with_due_date():
+    task = Task("Задача", "Новая", make_member(), due_date="05.10.2026")
+    assert str(task) == (
+        "Задача [Ожидает начала] - Иван Иванов, срок: 05.10.2026"
+    )
+
+
 def test_add_task():
     tasks = []
     member = make_member()
@@ -31,6 +46,7 @@ def test_add_task():
     assert len(tasks) == 1
     assert isinstance(tasks[0], Task)
     assert tasks[0].assignee is member
+    assert tasks[0].due_date == ""
 
 
 def test_count_completed_tasks():
@@ -71,3 +87,42 @@ def test_sort_tasks_by_status():
     ]
     sorted_tasks = sort_tasks_by_status(tasks)
     assert sorted_tasks[0].status == "Выполнена"
+
+
+def test_sort_tasks_by_due_date_puts_undated_last():
+    member = make_member()
+    tasks = [
+        Task("Без срока", "Новая", member),
+        Task("Позже", "Новая", member, due_date="01.12.2026"),
+        Task("Раньше", "Новая", member, due_date="01.10.2026"),
+    ]
+    sorted_tasks = sort_tasks_by_due_date(tasks)
+    assert [task.name for task in sorted_tasks] == [
+        "Раньше", "Позже", "Без срока",
+    ]
+
+
+def test_update_task_status_found():
+    member = make_member()
+    tasks = [Task("Задача", "Новая", member)]
+    assert update_task_status(tasks, "Задача", "В работе") is True
+    assert tasks[0].status == "В работе"
+
+
+def test_update_task_status_not_found():
+    tasks = []
+    assert update_task_status(tasks, "Нет такой", "В работе") is False
+
+
+def test_delete_task_found():
+    member = make_member()
+    tasks = [Task("Задача 1", "Новая", member), Task("Задача 2", "Новая", member)]
+    assert delete_task(tasks, "Задача 1") is True
+    assert len(tasks) == 1
+    assert tasks[0].name == "Задача 2"
+
+
+def test_delete_task_not_found():
+    tasks = [Task("Задача 1", "Новая", make_member())]
+    assert delete_task(tasks, "Нет такой") is False
+    assert len(tasks) == 1
