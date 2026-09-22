@@ -69,7 +69,12 @@ def print_menu() -> None:
 def main() -> None:
     """Загрузить данные и запустить меню приложения."""
     project, members = load_project_data(PROJECTS_FILE)
+
+    if project is None:
+        print("Не удалось загрузить данные проекта.")
+        return
     tasks = load_tasks(TASKS_FILE, members)
+
 
     print("СИСТЕМА УПРАВЛЕНИЯ КОМАНДНЫМИ ПРОЕКТАМИ")
 
