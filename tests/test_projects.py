@@ -64,6 +64,53 @@ def test_team_str():
     assert str(team) == "Тестовая команда (1 участников)"
 
 
+def test_team_add_member():
+    team = Team("Команда", [])
+    team.add_member(Member("Пётр Сидоров", "Тестировщик"))
+    assert len(team.members) == 1
+    assert team.members[0].name == "Пётр Сидоров"
+
+
+def test_team_find_member():
+    team = make_team()
+    team.add_member(Member("Мария Смирнова", "Дизайнер"))
+    found = team.find_member("смирнова")
+    assert len(found) == 1
+    assert found[0].name == "Мария Смирнова"
+
+
+def test_team_find_member_not_found():
+    team = make_team()
+    assert team.find_member("Незнакомец") == []
+
+
+def test_project_get_info_text_includes_team():
+    project = Project(
+        name="Тестовый проект",
+        description="Описание",
+        manager="Анна Петрова",
+        start_date="01.01.2026",
+        end_date="01.02.2026",
+        status="Активен",
+        team=make_team(),
+    )
+    info = project.get_info_text()
+    assert "Команда: Тестовая команда (1 участников)" in info
+
+
+def test_project_get_info_text_without_team():
+    project = Project(
+        name="Тестовый проект",
+        description="Описание",
+        manager="Анна Петрова",
+        start_date="01.01.2026",
+        end_date="01.02.2026",
+        status="Активен",
+    )
+    info = project.get_info_text()
+    assert "Команда" not in info
+
+
 def test_add_member():
     members = []
     add_member(members, "Мария Смирнова", "Дизайнер")
