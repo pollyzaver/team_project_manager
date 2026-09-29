@@ -1,4 +1,4 @@
-"""Тесты для класса Task и функций tasks.py."""
+"""Тесты для функций-модулей из tasks.py (не для класса Task)."""
 from models import Member, Task
 from tasks import (
     add_task,
@@ -15,28 +15,6 @@ from tasks import (
 def make_member() -> Member:
     """Создать тестового участника."""
     return Member("Иван Иванов", "Разработчик")
-
-
-def test_task_is_completed():
-    task = Task("Задача", "Выполнена", make_member())
-    assert task.is_completed() is True
-
-
-def test_task_is_not_completed():
-    task = Task("Задача", "В работе", make_member())
-    assert task.is_completed() is False
-
-
-def test_task_str_without_due_date():
-    task = Task("Задача", "Новая", make_member())
-    assert str(task) == "Задача [Ожидает начала] - Иван Иванов"
-
-
-def test_task_str_with_due_date():
-    task = Task("Задача", "Новая", make_member(), due_date="05.10.2026")
-    assert str(task) == (
-        "Задача [Ожидает начала] - Иван Иванов, срок: 05.10.2026"
-    )
 
 
 def test_add_task():
@@ -116,7 +94,10 @@ def test_update_task_status_not_found():
 
 def test_delete_task_found():
     member = make_member()
-    tasks = [Task("Задача 1", "Новая", member), Task("Задача 2", "Новая", member)]
+    tasks = [
+        Task("Задача 1", "Новая", member),
+        Task("Задача 2", "Новая", member),
+    ]
     assert delete_task(tasks, "Задача 1") is True
     assert len(tasks) == 1
     assert tasks[0].name == "Задача 2"
