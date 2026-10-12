@@ -3,6 +3,9 @@ import json
 from typing import List, Optional
 from models import Member, Project, Task, Team
 
+PROJECTS_FILE = "data/projects.json"
+TASKS_FILE = "data/tasks.json"
+
 
 def load_project_data(filename: str) -> List[Project]:
     """Загрузить список проектов вместе с их командами из JSON-файла.
@@ -26,6 +29,7 @@ def load_project_data(filename: str) -> List[Project]:
         ]
         team = Team(team_data.get("name", "Команда проекта"), members)
         projects.append(Project(
+            project_id=project_data.get("id", 0),
             name=project_data["name"],
             description=project_data["description"],
             manager=project_data["manager"],
@@ -34,14 +38,17 @@ def load_project_data(filename: str) -> List[Project]:
             status=project_data["status"],
             team=team,
         ))
+    _assign_missing_ids(projects)
     return projects
 
 
 def save_project_data(filename: str, projects: List[Project]) -> None:
     """Сохранить список проектов вместе с их командами в JSON-файл."""
+    _assign_missing_ids(projects)
     data = {
         "projects": [
             {
+                "id": project.id,
                 "name": project.name,
                 "description": project.description,
                 "manager": project.manager,
@@ -89,14 +96,18 @@ def load_tasks(filename: str, projects: List[Project]) -> None:
                 status=task_data["status"],
                 assignee=assignee,
                 due_date=task_data.get("due_date", ""),
+                task_id=task_data.get("id", 0),
             ))
+    _assign_missing_ids(_collect_tasks(projects))
 
 
 def save_tasks(filename: str, projects: List[Project]) -> None:
     """Сохранить задачи всех проектов в JSON-файл (по названию проекта)."""
+    _assign_missing_ids(_collect_tasks(projects))
     data = {
         project.name: [
             {
+                "id": task.id,
                 "name": task.name,
                 "status": task.status,
                 "assignee": task.assignee.name,
@@ -119,3 +130,36 @@ def _find_member_by_name(
         if member.name == name:
             return member
     return None
+
+
+def load_all(
+    projects_file: str = PROJECTS_FILE,
+    tasks_file: str = TASKS_FILE,
+) -> List[Project]:
+    """Загрузить проекты вместе с командами и задачами одним вызовом.
+
+    Используется веб-слоем: каждая view-функция получает готовый
+    список проектов, в котором уже заполнены team и tasks.
+    """
+    projects = load_project_data(projects_file)
+    load_tasks(tasks_file, projects)
+    return projects
+
+
+def _collect_tasks(projects: List[Project]) -> List[Task]:
+    """Собрать задачи всех проектов в один список."""
+    return [task for project in projects for task in project.tasks]
+
+
+def _assign_missing_ids(items) -> None:
+    """Назначить идентификаторы объектам, у которых id ещё не задан.
+
+    Объекты без id (id == 0) получают следующие свободные числа
+    после максимального из уже существующих. Так старые JSON-файлы
+    без поля "id" продолжают загружаться, а id остаются уникальными.
+    """
+    next_id = max((item.id for item in items), default=0) + 1
+    for item in items:
+        if not item.id:
+            item.id = next_id
+            next_id += 1

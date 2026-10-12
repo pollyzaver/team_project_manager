@@ -1,5 +1,5 @@
 """Функции для работы с проектами, командами и участниками."""
-from typing import List
+from typing import List, Optional
 
 from models import Member, Project, Team
 
@@ -32,6 +32,7 @@ def create_project(
     участников — участников добавляют отдельно через add_member.
     """
     project = Project(
+        project_id=next_project_id(projects),
         name=name,
         description=description,
         manager=manager,
@@ -50,3 +51,23 @@ def find_project(projects: List[Project], query: str) -> List[Project]:
         project for project in projects
         if query.lower() in project.name.lower()
     ]
+
+
+def next_project_id(projects: List[Project]) -> int:
+    """Вернуть следующий свободный числовой идентификатор проекта."""
+    return max((project.id for project in projects), default=0) + 1
+
+
+def find_project_by_id(
+    projects: List[Project],
+    project_id: int,
+) -> Optional[Project]:
+    """Найти проект по идентификатору.
+
+    Возвращает объект Project или None, если проекта с таким
+    идентификатором нет.
+    """
+    for project in projects:
+        if project.id == project_id:
+            return project
+    return None

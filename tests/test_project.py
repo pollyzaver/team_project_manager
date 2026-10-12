@@ -54,3 +54,20 @@ def test_project_get_info_text_without_team():
     project = make_project()
     info = project.get_info_text()
     assert "Команда" not in info
+
+
+def test_project_id_default_zero():
+    assert make_project().id == 0
+
+
+def test_project_id_is_stored():
+    project = Project(
+        name="Проект",
+        description="",
+        manager="",
+        start_date="",
+        end_date="",
+        status="Активен",
+        project_id=5,
+    )
+    assert project.id == 5

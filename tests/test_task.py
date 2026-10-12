@@ -42,3 +42,13 @@ def test_task_str_with_due_date():
     assert str(task) == (
         "Задача [Ожидает начала] - Иван Иванов, срок: 05.10.2026"
     )
+
+
+def test_task_id_default_zero():
+    task = Task("Задача", "Новая", make_member())
+    assert task.id == 0
+
+
+def test_task_id_is_stored():
+    task = Task("Задача", "Новая", make_member(), task_id=7)
+    assert task.id == 7

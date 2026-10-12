@@ -1,6 +1,13 @@
 """Тесты для функций-модулей из projects.py (не для классов)."""
 from models import Member, Project, Team
-from projects import add_member, create_project, find_member, find_project
+from projects import (
+    add_member,
+    create_project,
+    find_member,
+    find_project,
+    find_project_by_id,
+    next_project_id,
+)
 
 
 def make_team() -> Team:
@@ -41,6 +48,7 @@ def test_create_project():
     assert len(projects) == 1
     assert isinstance(project, Project)
     assert project.status == "Активен"
+    assert project.id == 1
     assert project.team.name == "Новая команда"
     assert project.team.members == []
 
@@ -69,3 +77,37 @@ def test_find_project():
     found = find_project(projects, "мобильное")
     assert len(found) == 1
     assert found[0].name == "Мобильное приложение"
+
+
+def make_numbered_projects():
+    """Создать два проекта с идентификаторами 1 и 2."""
+    return [
+        Project("Первый", "", "", "", "", "Активен", project_id=1),
+        Project("Второй", "", "", "", "", "Активен", project_id=2),
+    ]
+
+
+def test_next_project_id_empty_list():
+    assert next_project_id([]) == 1
+
+
+def test_next_project_id_after_existing():
+    assert next_project_id(make_numbered_projects()) == 3
+
+
+def test_create_project_gets_next_id():
+    projects = make_numbered_projects()
+    project = create_project(
+        projects, "Третий", "", "", "", "", "Команда",
+    )
+    assert project.id == 3
+
+
+def test_find_project_by_id_found():
+    found = find_project_by_id(make_numbered_projects(), 2)
+    assert found is not None
+    assert found.name == "Второй"
+
+
+def test_find_project_by_id_not_found():
+    assert find_project_by_id(make_numbered_projects(), 999) is None

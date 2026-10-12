@@ -16,13 +16,17 @@ class Task:
         status: str,
         assignee,
         due_date: str = "",
+        task_id: int = 0,
     ) -> None:
         """Создать объект задачи.
 
         assignee — объект Member, ответственный за выполнение задачи.
         due_date — срок выполнения в формате "ДД.ММ.ГГГГ" (может быть
         пустой строкой, если срок не задан).
+        task_id — уникальный числовой идентификатор задачи
+        (используется в адресах веб-страниц, например /tasks/1/).
         """
+        self.id = task_id
         self.name = name
         self.status = status
         self.assignee = assignee

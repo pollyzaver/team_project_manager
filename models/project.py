@@ -14,12 +14,16 @@ class Project:
         status: str,
         team=None,
         tasks=None,
+        project_id: int = 0,
     ) -> None:
         """Создать объект проекта.
 
         team — объект Team, назначенный на проект.
         tasks — список задач (Task), относящихся к проекту.
+        project_id — уникальный числовой идентификатор проекта
+        (используется в адресах веб-страниц, например /projects/1/).
         """
+        self.id = project_id
         self.name = name
         self.description = description
         self.manager = manager

@@ -1,6 +1,7 @@
 """Тесты для функций сохранения/загрузки данных в storage.py."""
 from models import Member, Project, Task, Team
 from storage import (
+    load_all,
     load_project_data,
     load_tasks,
     save_project_data,
@@ -115,3 +116,67 @@ def test_tasks_are_grouped_by_project_name(tmp_path):
 
     assert [t.name for t in reloaded_a.tasks] == ["Задача А"]
     assert [t.name for t in reloaded_b.tasks] == ["Задача Б"]
+
+
+def test_project_ids_are_saved_and_loaded(tmp_path):
+    filename = tmp_path / "projects.json"
+    first = make_project("Первый")
+    first.id = 4
+    second = make_project("Второй")
+    second.id = 9
+
+    save_project_data(str(filename), [first, second])
+    loaded = load_project_data(str(filename))
+
+    assert [project.id for project in loaded] == [4, 9]
+
+
+def test_projects_without_id_in_file_get_unique_ids(tmp_path):
+    filename = tmp_path / "projects.json"
+    filename.write_text(
+        '{"projects": ['
+        '{"name": "А", "description": "", "manager": "", '
+        '"start_date": "", "end_date": "", "status": "Активен"}, '
+        '{"name": "Б", "description": "", "manager": "", '
+        '"start_date": "", "end_date": "", "status": "Активен"}'
+        ']}',
+        encoding="utf-8",
+    )
+
+    loaded = load_project_data(str(filename))
+
+    assert [project.id for project in loaded] == [1, 2]
+
+
+def test_task_ids_are_unique_across_projects(tmp_path):
+    filename = tmp_path / "tasks.json"
+    project_a = make_project("Проект А")
+    project_b = make_project("Проект Б")
+    project_a.tasks = [Task("Задача А", "Новая", project_a.team.members[0])]
+    project_b.tasks = [Task("Задача Б", "Новая", project_b.team.members[0])]
+
+    save_tasks(str(filename), [project_a, project_b])
+
+    assert [project_a.tasks[0].id, project_b.tasks[0].id] == [1, 2]
+
+    reloaded_a = make_project("Проект А")
+    reloaded_b = make_project("Проект Б")
+    load_tasks(str(filename), [reloaded_a, reloaded_b])
+
+    assert reloaded_a.tasks[0].id == 1
+    assert reloaded_b.tasks[0].id == 2
+
+
+def test_load_all_returns_projects_with_tasks(tmp_path):
+    projects_file = tmp_path / "projects.json"
+    tasks_file = tmp_path / "tasks.json"
+    project = make_project()
+    project.tasks = [Task("Задача", "Новая", project.team.members[0])]
+    save_project_data(str(projects_file), [project])
+    save_tasks(str(tasks_file), [project])
+
+    loaded = load_all(str(projects_file), str(tasks_file))
+
+    assert len(loaded) == 1
+    assert loaded[0].team.name == "Тестовая команда"
+    assert [task.name for task in loaded[0].tasks] == ["Задача"]

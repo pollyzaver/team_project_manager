@@ -1,7 +1,7 @@
 """Функции для работы с задачами проекта."""
-from typing import List
+from typing import List, Optional
 
-from models import Member, Task
+from models import Member, Project, Task
 
 
 def add_task(
@@ -10,9 +10,14 @@ def add_task(
     status: str,
     assignee: Member,
     due_date: str = "",
+    task_id: int = 0,
 ) -> None:
-    """Добавить новую задачу в список задач."""
-    tasks.append(Task(name, status, assignee, due_date))
+    """Добавить новую задачу в список задач.
+
+    Если task_id не передан (0), идентификатор будет назначен
+    при ближайшем сохранении данных (см. storage.save_tasks).
+    """
+    tasks.append(Task(name, status, assignee, due_date, task_id))
 
 
 def count_completed_tasks(tasks: List[Task]) -> int:
@@ -76,3 +81,23 @@ def delete_task(tasks: List[Task], name: str) -> bool:
             del tasks[index]
             return True
     return False
+
+
+def get_all_tasks(projects: List[Project]) -> List[Task]:
+    """Собрать задачи всех проектов в один общий список."""
+    all_tasks: List[Task] = []
+    for project in projects:
+        all_tasks.extend(project.tasks)
+    return all_tasks
+
+
+def find_task_by_id(tasks: List[Task], task_id: int) -> Optional[Task]:
+    """Найти задачу по идентификатору.
+
+    Возвращает объект Task или None, если задачи с таким
+    идентификатором нет.
+    """
+    for task in tasks:
+        if task.id == task_id:
+            return task
+    return None
