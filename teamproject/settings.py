@@ -38,7 +38,8 @@ ROOT_URLCONF = "teamproject.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # Шаблоны уровня проекта (base.html, navigation.html, 404.html).
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

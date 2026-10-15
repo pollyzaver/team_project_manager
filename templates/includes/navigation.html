@@ -1,0 +1,16 @@
+{% with section=request.resolver_match.namespace %}
+  <nav class="nav">
+    <a
+      class="nav-link {% if section == 'homepage' %}active{% endif %}"
+      href="{% url 'homepage:index' %}"
+    >Главная</a>
+    <a
+      class="nav-link {% if section == 'projects' %}active{% endif %}"
+      href="{% url 'projects:list' %}"
+    >Проекты</a>
+    <a
+      class="nav-link {% if section == 'tasks' %}active{% endif %}"
+      href="{% url 'tasks:list' %}"
+    >Задачи</a>
+  </nav>
+{% endwith %}

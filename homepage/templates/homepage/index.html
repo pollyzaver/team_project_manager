@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Главная – TeamProject Manager
+{% endblock %}
+
+{% block content %}
+  <h1 class="display-4">TeamProject Manager</h1>
+
+  <p class="lead">
+    Система управления командными проектами.
+  </p>
+  <p>
+    Здесь можно посмотреть проекты, их команды и задачи, а также
+    узнать, как продвигается работа.
+  </p>
+  <p>Основные разделы:</p>
+  <a href="{% url 'projects:list' %}" class="btn btn-primary me-2">
+    Проекты
+  </a>
+  <a href="{% url 'tasks:list' %}" class="btn btn-secondary">
+    Задачи
+  </a>
+{% endblock %}

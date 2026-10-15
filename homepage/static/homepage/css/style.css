@@ -1,0 +1,56 @@
+/* Собственные стили TeamProject Manager (дополняют Bootstrap). */
+
+body {
+  min-height: 100vh;
+  background-color: #f6f8fb;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dde3ec;
+  margin-bottom: 1.5rem;
+}
+
+.teamproject-logo {
+  width: 64px;
+  height: auto;
+}
+
+.site-header .nav-link {
+  color: #31445e;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.site-header .nav-link.active {
+  color: #ffffff;
+  background-color: #0d6efd;
+}
+
+.project-card {
+  border: 1px solid #dde3ec;
+  border-left: 5px solid #0d6efd;
+  border-radius: 8px;
+}
+
+.project-status,
+.task-status {
+  font-weight: 600;
+}
+
+.task-status-done {
+  letter-spacing: 0.02em;
+}
+
+.progress {
+  height: 1.25rem;
+}
+
+footer {
+  color: #6c7a8f;
+  font-size: 0.9rem;
+}
