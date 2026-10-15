@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Задачи – TeamProject Manager
+{% endblock %}
+
+{% block content %}
+  <h1>Задачи</h1>
+
+  <p>
+    Всего задач: {{ tasks|length }}
+  </p>
+
+  <ul class="list-group">
+    {% for task in tasks %}
+      <li class="list-group-item d-flex justify-content-between">
+        <span>
+          <a href="{% url 'tasks:detail' task.id %}">{{ task.name }}</a>
+          <br>
+          <small class="text-muted">
+            Исполнитель: {{ task.assignee.name }}
+          </small>
+        </span>
+        {% include "task_pages/includes/task_status.html" %}
+      </li>
+    {% empty %}
+      <li class="list-group-item">Задачи не найдены.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

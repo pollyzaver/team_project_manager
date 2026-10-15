@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if task %}
+    {{ task.name }} – TeamProject Manager
+  {% else %}
+    Задача не найдена – TeamProject Manager
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% if task %}
+    <div class="card">
+      <div class="card-body">
+        <h1 class="card-title">
+          {{ task.name }}
+        </h1>
+
+        <p class="card-text">
+          <strong>ID:</strong> {{ task.id }}
+        </p>
+
+        <p class="card-text">
+          <strong>Проект:</strong>
+          <a href="{% url 'projects:detail' project.id %}">
+            {{ project.name }}
+          </a>
+        </p>
+
+        <p class="card-text">
+          <strong>Исполнитель:</strong>
+          {{ task.assignee.name }} ({{ task.assignee.role }})
+        </p>
+
+        <p class="card-text">
+          <strong>Срок:</strong>
+          {{ task.due_date|default:"не задан" }}
+        </p>
+
+        <p class="card-text">
+          <strong>Статус:</strong>
+          {% include "task_pages/includes/task_status.html" %}
+          ({{ task.get_status_text }})
+        </p>
+      </div>
+    </div>
+  {% else %}
+    <h1 class="text-danger">Задача не найдена</h1>
+    <p>Задача с указанным идентификатором отсутствует.</p>
+  {% endif %}
+
+  <a href="{% url 'tasks:list' %}" class="btn btn-outline-secondary mt-3">
+    ← к списку задач
+  </a>
+{% endblock %}
