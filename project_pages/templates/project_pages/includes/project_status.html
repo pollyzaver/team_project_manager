@@ -1,0 +1,9 @@
+{% if project.is_active %}
+  <span class="badge bg-success project-status project-status-active">
+    Активен
+  </span>
+{% else %}
+  <span class="badge bg-secondary project-status project-status-inactive">
+    Не активен
+  </span>
+{% endif %}

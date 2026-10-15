@@ -1,0 +1,13 @@
+{% if task.is_completed %}
+  <span class="badge bg-success task-status task-status-done">
+    {{ task.status }}
+  </span>
+{% elif task.status == "В работе" %}
+  <span class="badge bg-primary task-status task-status-progress">
+    {{ task.status }}
+  </span>
+{% else %}
+  <span class="badge bg-secondary task-status task-status-new">
+    {{ task.status }}
+  </span>
+{% endif %}
