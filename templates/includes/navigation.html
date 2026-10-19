@@ -12,5 +12,9 @@
       class="nav-link {% if section == 'tasks' %}active{% endif %}"
       href="{% url 'tasks:list' %}"
     >Задачи</a>
+    <a
+      class="nav-link {% if section == 'reports' %}active{% endif %}"
+      href="{% url 'reports:stats' %}"
+    >Отчёты</a>
   </nav>
 {% endwith %}

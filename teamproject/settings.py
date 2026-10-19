@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "homepage",
     "project_pages",
     "task_pages",
+    "report_pages",
 ]
 
 MIDDLEWARE = [

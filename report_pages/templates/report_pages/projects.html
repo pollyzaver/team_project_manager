@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Проекты и задачи – TeamProject Manager
+{% endblock %}
+
+{% block content %}
+  <h1>Отчёты</h1>
+  {% include "report_pages/includes/report_menu.html" %}
+
+  <h2 class="h4">Проекты и количество задач</h2>
+  <table class="table">
+    <thead>
+      <tr><th>Проект</th><th>Статус</th><th>Задач</th></tr>
+    </thead>
+    <tbody>
+      {% for project in projects %}
+        <tr>
+          <td>
+            <a href="{% url 'projects:detail' project.id %}">
+              {{ project.name }}
+            </a>
+          </td>
+          <td>{{ project.status }}</td>
+          <td>{{ project.tasks_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">Проекты не найдены.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

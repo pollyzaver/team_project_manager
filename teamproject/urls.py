@@ -7,6 +7,7 @@ urlpatterns = [
     path("", include("homepage.urls")),
     path("projects/", include("project_pages.urls")),
     path("tasks/", include("task_pages.urls")),
+    path("reports/", include("report_pages.urls")),
 ]
 
 handler404 = "homepage.views.page_not_found"

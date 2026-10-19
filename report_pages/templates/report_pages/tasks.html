@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Незавершённые задачи – TeamProject Manager
+{% endblock %}
+
+{% block content %}
+  <h1>Отчёты</h1>
+  {% include "report_pages/includes/report_menu.html" %}
+
+  <h2 class="h4">Незавершённые задачи</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Задача</th><th>Проект</th><th>Исполнитель</th>
+        <th>Статус</th><th>Срок</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+        <tr>
+          <td>
+            <a href="{% url 'tasks:detail' task.id %}">
+              {{ task.task_name }}
+            </a>
+          </td>
+          <td>{{ task.project_name }}</td>
+          <td>{{ task.assignee_name }}</td>
+          <td>{{ task.status }}</td>
+          <td>{{ task.due_date|default:"не задан" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">Незавершённых задач нет.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

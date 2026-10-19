@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Поиск по сроку – TeamProject Manager
+{% endblock %}
+
+{% block content %}
+  <h1>Отчёты</h1>
+  {% include "report_pages/includes/report_menu.html" %}
+
+  <h2 class="h4">Задачи со сроком не позже выбранной даты</h2>
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+      <input
+        type="date"
+        name="date"
+        value="{{ selected_date }}"
+        class="form-control"
+      >
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Найти</button>
+    </div>
+  </form>
+
+  {% if error %}
+    <p class="text-danger">{{ error }}</p>
+  {% elif tasks is None %}
+    <p>Выберите дату, чтобы увидеть задачи.</p>
+  {% else %}
+    <p>Найдено задач: {{ tasks|length }}</p>
+    <ul class="list-group">
+      {% for task in tasks %}
+        <li class="list-group-item">
+          <a href="{% url 'tasks:detail' task.id %}">
+            {{ task.task_name }}
+          </a>
+          — срок {{ task.due_date }}, исполнитель
+          {{ task.assignee_name }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">
+          На эту дату задач со сроком нет.
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}

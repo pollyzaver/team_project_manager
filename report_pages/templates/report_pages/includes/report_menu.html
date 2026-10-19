@@ -1,0 +1,34 @@
+{% with name=request.resolver_match.url_name %}
+  <ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+      <a
+        class="nav-link {% if name == 'stats' %}active{% endif %}"
+        href="{% url 'reports:stats' %}"
+      >Статистика</a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link {% if name == 'projects' %}active{% endif %}"
+        href="{% url 'reports:projects' %}"
+      >Проекты</a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link {% if name == 'tasks' %}active{% endif %}"
+        href="{% url 'reports:tasks' %}"
+      >Незавершённые задачи</a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link {% if name == 'deadlines' %}active{% endif %}"
+        href="{% url 'reports:deadlines' %}"
+      >Поиск по сроку</a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link {% if name == 'workload' %}active{% endif %}"
+        href="{% url 'reports:workload' %}"
+      >Нагрузка участников</a>
+    </li>
+  </ul>
+{% endwith %}

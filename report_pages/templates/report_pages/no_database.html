@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}
+  База данных не создана – TeamProject Manager
+{% endblock %}
+
+{% block content %}
+  <h1>База данных не создана</h1>
+  <p>
+    Чтобы появились отчёты, перенесите данные из JSON в SQLite
+    командой <code>python -m db.import_json</code>.
+  </p>
+{% endblock %}
