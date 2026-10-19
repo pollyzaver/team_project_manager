@@ -3,3 +3,7 @@ __pycache__/
 .DS_Store
 venv/
 db.sqlite3
+
+# База данных SQLite создаётся командой python -m db.import_json
+data/*.sqlite
+data/*.sqlite-journal
