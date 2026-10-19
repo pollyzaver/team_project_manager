@@ -44,5 +44,19 @@
         </li>
       {% endfor %}
     </ul>
+
+    <h2 class="h4 mt-4">Свободные участники на {{ selected_date }}</h2>
+    <p class="text-muted">
+      Нет невыполненных задач со сроком в этот день.
+    </p>
+    <ul class="list-group">
+      {% for member in free_members %}
+        <li class="list-group-item">
+          {{ member.name }} — {{ member.role }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">Свободных участников нет.</li>
+      {% endfor %}
+    </ul>
   {% endif %}
 {% endblock %}

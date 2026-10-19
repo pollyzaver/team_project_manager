@@ -83,3 +83,46 @@ FROM tasks
 WHERE due_date IS NOT NULL
 ORDER BY due_date
 LIMIT 3;
+
+-- 14. Задачи в нужных статусах (WHERE, IN, OR)
+SELECT id, name, status
+FROM tasks
+WHERE status IN ('Новая', 'В работе');
+
+-- 15. Задачи со сроком в диапазоне дат (WHERE, BETWEEN, AND)
+SELECT id, name, due_date
+FROM tasks
+WHERE due_date BETWEEN ? AND ?
+ORDER BY due_date;
+
+-- 16. Поиск участников по части названия роли (LIKE)
+SELECT name, role
+FROM members
+WHERE role LIKE '%азработ%';
+
+-- 17. Задачи без срока (IS NULL)
+SELECT id, name, status
+FROM tasks
+WHERE due_date IS NULL;
+
+-- 18. Вторая страница списка задач по две на страницу (LIMIT, OFFSET)
+SELECT id, name
+FROM tasks
+ORDER BY id
+LIMIT 2 OFFSET 2;
+
+-- 19. Участники, свободные на выбранную дату:
+-- нет невыполненных задач со сроком в этот день (подзапрос, NOT IN)
+SELECT id, name, role
+FROM members
+WHERE id NOT IN (
+  SELECT assignee_id
+  FROM tasks
+  WHERE due_date = ? AND status <> 'Выполнена'
+)
+ORDER BY name;
+
+-- 20. Уникальные роли участников (DISTINCT)
+SELECT DISTINCT role
+FROM members
+ORDER BY role;

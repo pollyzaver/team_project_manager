@@ -26,53 +26,67 @@ def import_json() -> dict:
     init_db()
     projects = load_all()
     connection = get_connection()
-    counts = {"projects": 0, "teams": 0, "members": 0, "tasks": 0}
     try:
         # Повторный запуск не дублирует данные: сначала очищаем
         # таблицы в порядке от зависимых к главным.
         for table in ("tasks", "members", "teams", "projects"):
             connection.execute(f"DELETE FROM {table}")
 
-        for project in projects:
-            connection.execute(
-                "INSERT INTO projects (id, name, description, manager, "
-                "start_date, end_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (
-                    project.id, project.name, project.description,
-                    project.manager, to_iso_date(project.start_date),
-                    to_iso_date(project.end_date), project.status,
-                ),
-            )
-            counts["projects"] += 1
+        projects_rows, teams_rows, members_rows, tasks_rows = [], [], [], []
+        next_member_id = 1
+        for team_id, project in enumerate(projects, start=1):
+            projects_rows.append((
+                project.id, project.name, project.description,
+                project.manager, to_iso_date(project.start_date),
+                to_iso_date(project.end_date), project.status,
+            ))
+            teams_rows.append((team_id, project.team.name, project.id))
 
-            team_id = connection.execute(
-                "INSERT INTO teams (name, project_id) VALUES (?, ?)",
-                (project.team.name, project.id),
-            ).lastrowid
-            counts["teams"] += 1
-
-            # Участники в JSON не имеют id: база выдаёт их сама,
-            # а мы запоминаем, какой id получил каждый участник.
+            # Участники в JSON не имеют id: назначаем их сами и
+            # запоминаем, какой id получил каждый участник.
             member_ids = {}
             for member in project.team.members:
-                member_ids[id(member)] = connection.execute(
-                    "INSERT INTO members (name, role, team_id) "
-                    "VALUES (?, ?, ?)",
-                    (member.name, member.role, team_id),
-                ).lastrowid
-                counts["members"] += 1
+                member_ids[id(member)] = next_member_id
+                members_rows.append(
+                    (next_member_id, member.name, member.role, team_id),
+                )
+                next_member_id += 1
 
             for task in project.tasks:
-                connection.execute(
-                    "INSERT INTO tasks (id, name, status, due_date, "
-                    "project_id, assignee_id) VALUES (?, ?, ?, ?, ?, ?)",
-                    (
-                        task.id, task.name, task.status,
-                        to_iso_date(task.due_date), project.id,
-                        member_ids[id(task.assignee)],
-                    ),
-                )
-                counts["tasks"] += 1
+                tasks_rows.append((
+                    task.id, task.name, task.status,
+                    to_iso_date(task.due_date), project.id,
+                    member_ids[id(task.assignee)],
+                ))
+
+        # executemany выполняет один запрос сразу для всех наборов
+        # значений. Порядок важен: сначала главные таблицы, потом
+        # те, что на них ссылаются (внешние ключи).
+        connection.executemany(
+            "INSERT INTO projects (id, name, description, manager, "
+            "start_date, end_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            projects_rows,
+        )
+        connection.executemany(
+            "INSERT INTO teams (id, name, project_id) VALUES (?, ?, ?)",
+            teams_rows,
+        )
+        connection.executemany(
+            "INSERT INTO members (id, name, role, team_id) "
+            "VALUES (?, ?, ?, ?)",
+            members_rows,
+        )
+        connection.executemany(
+            "INSERT INTO tasks (id, name, status, due_date, "
+            "project_id, assignee_id) VALUES (?, ?, ?, ?, ?, ?)",
+            tasks_rows,
+        )
+        counts = {
+            "projects": len(projects_rows),
+            "teams": len(teams_rows),
+            "members": len(members_rows),
+            "tasks": len(tasks_rows),
+        }
         connection.commit()
     finally:
         connection.close()

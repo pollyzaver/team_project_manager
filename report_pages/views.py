@@ -52,9 +52,14 @@ def tasks(request):
 
 
 def deadlines(request):
-    """Поиск задач, срок которых наступает не позже выбранной даты."""
+    """Задачи со сроком не позже даты и участники, свободные в этот день."""
     selected_date = request.GET.get("date", "")
-    context = {"selected_date": selected_date, "tasks": None, "error": ""}
+    context = {
+        "selected_date": selected_date,
+        "tasks": None,
+        "free_members": None,
+        "error": "",
+    }
 
     if selected_date:
         try:
@@ -74,6 +79,16 @@ def deadlines(request):
                     "WHERE tasks.due_date IS NOT NULL "
                     "AND tasks.due_date <= ? "
                     "ORDER BY tasks.due_date",
+                    (selected_date,),
+                )
+                # Участники, у которых нет невыполненных задач
+                # со сроком именно в этот день.
+                context["free_members"] = fetch_all(
+                    "SELECT id, name, role FROM members "
+                    "WHERE id NOT IN ("
+                    "SELECT assignee_id FROM tasks "
+                    "WHERE due_date = ? AND status <> 'Выполнена'"
+                    ") ORDER BY name",
                     (selected_date,),
                 )
             except FileNotFoundError:
