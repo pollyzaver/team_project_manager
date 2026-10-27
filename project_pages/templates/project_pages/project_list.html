@@ -7,8 +7,47 @@
 {% block content %}
   <h1>Проекты</h1>
 
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+      <input
+        type="search"
+        name="q"
+        value="{{ query }}"
+        class="form-control"
+        placeholder="Поиск по названию, описанию, руководителю"
+      >
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">Все статусы</option>
+        {% for value, label in statuses %}
+          <option
+            value="{{ value }}"
+            {% if selected_status == value %}selected{% endif %}
+          >{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="sort" class="form-select">
+        {% for value, label in sort_options %}
+          <option
+            value="{{ value }}"
+            {% if sort == value %}selected{% endif %}
+          >Сортировать по {{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary">Найти</button>
+      <a href="{% url 'projects:list' %}" class="btn btn-outline-secondary">
+        Сбросить
+      </a>
+    </div>
+  </form>
+
   <p>
-    Всего проектов: {{ projects|length }}
+    Найдено проектов: {{ projects|length }}
   </p>
 
   {% for project in projects %}

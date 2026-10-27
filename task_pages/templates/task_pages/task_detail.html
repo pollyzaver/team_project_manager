@@ -34,7 +34,7 @@
 
         <p class="card-text">
           <strong>Срок:</strong>
-          {{ task.due_date|default:"не задан" }}
+          {{ task.due_date|date:"d.m.Y"|default:"не задан" }}
         </p>
 
         <p class="card-text">

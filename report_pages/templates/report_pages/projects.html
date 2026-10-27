@@ -11,7 +11,10 @@
   <h2 class="h4">Проекты и количество задач</h2>
   <table class="table">
     <thead>
-      <tr><th>Проект</th><th>Статус</th><th>Задач</th></tr>
+      <tr>
+        <th>Проект</th><th>Статус</th>
+        <th>Задач</th><th>Не выполнено</th>
+      </tr>
     </thead>
     <tbody>
       {% for project in projects %}
@@ -23,9 +26,10 @@
           </td>
           <td>{{ project.status }}</td>
           <td>{{ project.tasks_count }}</td>
+          <td>{{ project.open_count }}</td>
         </tr>
       {% empty %}
-        <tr><td colspan="3">Проекты не найдены.</td></tr>
+        <tr><td colspan="4">Проекты не найдены.</td></tr>
       {% endfor %}
     </tbody>
   </table>

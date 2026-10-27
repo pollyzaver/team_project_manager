@@ -19,6 +19,27 @@
     <li class="list-group-item">
       Участников в командах: <strong>{{ members_count }}</strong>
     </li>
+    <li class="list-group-item">
+      Сроки задач:
+      {% if totals.first_due %}
+        от <strong>{{ totals.first_due|date:"d.m.Y" }}</strong>
+        до <strong>{{ totals.last_due|date:"d.m.Y" }}</strong>
+      {% else %}
+        не заданы
+      {% endif %}
+    </li>
+  </ul>
+
+  <h2 class="h4">Ближайшие сроки</h2>
+  <ul class="list-group mb-4">
+    {% for task in nearest %}
+      <li class="list-group-item">
+        <a href="{% url 'tasks:detail' task.id %}">{{ task.name }}</a>
+        ({{ task.project.name }}) – {{ task.due_date|date:"d.m.Y" }}
+      </li>
+    {% empty %}
+      <li class="list-group-item">Невыполненных задач со сроком нет.</li>
+    {% endfor %}
   </ul>
 
   <h2 class="h4">Задачи по статусам</h2>

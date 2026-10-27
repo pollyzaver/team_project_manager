@@ -30,7 +30,8 @@
 
         <p class="card-text">
           <strong>Сроки:</strong>
-          {{ project.start_date }} – {{ project.end_date }}
+          {{ project.start_date|date:"d.m.Y"|default:"не задана" }} –
+          {{ project.end_date|date:"d.m.Y"|default:"не задана" }}
         </p>
 
         <p class="card-text">
@@ -40,7 +41,7 @@
 
         <p class="card-text mb-1">
           <strong>Прогресс:</strong> {{ progress }}%
-          (задач: {{ project.tasks|length }})
+          (задач: {{ tasks_total }})
         </p>
         <div class="progress">
           <div
@@ -57,7 +58,7 @@
 
     <h2>Команда: {{ project.team.name|default:"не назначена" }}</h2>
     <ul class="list-group mb-4">
-      {% for member in project.team.members %}
+      {% for member in project.team.members.all %}
         <li class="list-group-item">
           {{ member.name }} – {{ member.role }}
         </li>
@@ -68,7 +69,7 @@
 
     <h2>Задачи</h2>
     <ul class="list-group">
-      {% for task in project.tasks %}
+      {% for task in project.tasks.all %}
         <li class="list-group-item d-flex justify-content-between">
           <a href="{% url 'tasks:detail' task.id %}">{{ task.name }}</a>
           {% include "task_pages/includes/task_status.html" %}

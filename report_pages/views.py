@@ -1,59 +1,53 @@
-"""Отчёты: страницы, данные которых берутся из SQLite через SQL."""
+"""Отчёты: страницы, данные которых получены через Django ORM."""
 from datetime import datetime
 
+from django.db.models import Count, F, Max, Min, Q
 from django.shortcuts import render
 
-from db.database import fetch_all, fetch_one
+from project_pages.models import Project
+from task_pages.models import Task
+from team_pages.models import Member
 
 TEMPLATES = "report_pages/"
 
 
-def _no_database(request):
-    """Страница-подсказка, если база данных ещё не создана."""
-    return render(
-        request, TEMPLATES + "no_database.html", status=503,
-    )
-
-
 def projects(request):
-    """Проекты и количество задач в каждом (JOIN, COUNT, GROUP BY)."""
-    try:
-        rows = fetch_all(
-            "SELECT projects.id, projects.name, projects.status, "
-            "COUNT(tasks.id) AS tasks_count "
-            "FROM projects "
-            "LEFT JOIN tasks ON tasks.project_id = projects.id "
-            "GROUP BY projects.id "
-            "ORDER BY tasks_count DESC, projects.name"
-        )
-    except FileNotFoundError:
-        return _no_database(request)
+    """Проекты и количество задач в каждом (annotate, Count)."""
+    # Запрос строится от модели Project, поэтому проекты без задач
+    # тоже попадают в результат (аналог LEFT JOIN) со значением 0.
+    rows = Project.objects.annotate(
+        tasks_count=Count("tasks"),
+        open_count=Count("tasks", filter=~Q(tasks__status=Task.STATUS_DONE)),
+    ).order_by("-tasks_count", "name")
     context = {"projects": rows}
     return render(request, TEMPLATES + "projects.html", context)
 
 
 def tasks(request):
-    """Незавершённые задачи с проектом и исполнителем (JOIN)."""
-    try:
-        rows = fetch_all(
-            "SELECT tasks.id, tasks.name AS task_name, tasks.status, "
-            "tasks.due_date, projects.name AS project_name, "
-            "members.name AS assignee_name "
-            "FROM tasks "
-            "JOIN projects ON projects.id = tasks.project_id "
-            "JOIN members ON members.id = tasks.assignee_id "
-            "WHERE tasks.status <> 'Выполнена' "
-            "ORDER BY tasks.due_date IS NULL, tasks.due_date, tasks.id"
+    """Незавершённые задачи с проектом и исполнителем."""
+    # annotate + F берут поля связанных моделей, values оставляет
+    # в результате только нужные ключи (словари).
+    rows = (
+        Task.objects
+        .exclude(status=Task.STATUS_DONE)
+        .annotate(
+            task_name=F("name"),
+            project_name=F("project__name"),
+            assignee_name=F("assignee__name"),
         )
-    except FileNotFoundError:
-        return _no_database(request)
+        .values(
+            "id", "task_name", "status", "due_date",
+            "project_name", "assignee_name",
+        )
+        .order_by(F("due_date").asc(nulls_last=True), "id")
+    )
     context = {"tasks": rows}
     return render(request, TEMPLATES + "tasks.html", context)
 
 
 def deadlines(request):
     """Задачи со сроком не позже даты и участники, свободные в этот день."""
-    selected_date = request.GET.get("date", "")
+    selected_date = request.GET.get("date", "").strip()
     context = {
         "selected_date": selected_date,
         "tasks": None,
@@ -63,82 +57,83 @@ def deadlines(request):
 
     if selected_date:
         try:
-            datetime.strptime(selected_date, "%Y-%m-%d")
+            day = datetime.strptime(selected_date, "%Y-%m-%d").date()
         except ValueError:
             context["error"] = "Введите дату в формате ГГГГ-ММ-ДД."
         else:
-            try:
-                # Значение передаётся параметром (?), а не склеивается
-                # со строкой запроса.
-                context["tasks"] = fetch_all(
-                    "SELECT tasks.id, tasks.name AS task_name, "
-                    "tasks.status, tasks.due_date, "
-                    "members.name AS assignee_name "
-                    "FROM tasks "
-                    "JOIN members ON members.id = tasks.assignee_id "
-                    "WHERE tasks.due_date IS NOT NULL "
-                    "AND tasks.due_date <= ? "
-                    "ORDER BY tasks.due_date",
-                    (selected_date,),
+            # Условие due_date__lte само отбрасывает задачи без срока.
+            context["tasks"] = (
+                Task.objects
+                .filter(due_date__lte=day)
+                .annotate(
+                    task_name=F("name"),
+                    assignee_name=F("assignee__name"),
                 )
-                # Участники, у которых нет невыполненных задач
-                # со сроком именно в этот день.
-                context["free_members"] = fetch_all(
-                    "SELECT id, name, role FROM members "
-                    "WHERE id NOT IN ("
-                    "SELECT assignee_id FROM tasks "
-                    "WHERE due_date = ? AND status <> 'Выполнена'"
-                    ") ORDER BY name",
-                    (selected_date,),
+                .values(
+                    "id", "task_name", "status", "due_date",
+                    "assignee_name",
                 )
-            except FileNotFoundError:
-                return _no_database(request)
+                .order_by("due_date", "id")
+            )
+            # Занятые в этот день: невыполненные задачи со сроком day.
+            busy_ids = (
+                Task.objects
+                .filter(due_date=day)
+                .exclude(status=Task.STATUS_DONE)
+                .values_list("assignee_id", flat=True)
+            )
+            # Свободные — все остальные участники.
+            context["free_members"] = (
+                Member.objects
+                .exclude(pk__in=busy_ids)
+                .order_by("name")
+            )
     return render(request, TEMPLATES + "deadlines.html", context)
 
 
 def workload(request):
-    """Участники, у которых не меньше N задач (GROUP BY, HAVING)."""
+    """Участники, у которых не меньше N задач."""
     try:
         minimum = max(int(request.GET.get("min", 1)), 1)
     except ValueError:
         minimum = 1
-    try:
-        rows = fetch_all(
-            "SELECT members.name, members.role, "
-            "COUNT(tasks.id) AS tasks_count "
-            "FROM members "
-            "JOIN tasks ON tasks.assignee_id = members.id "
-            "GROUP BY members.id "
-            "HAVING COUNT(tasks.id) >= ? "
-            "ORDER BY tasks_count DESC, members.name",
-            (minimum,),
-        )
-    except FileNotFoundError:
-        return _no_database(request)
+    # Условие на значение агрегата превращается в SQL-блок HAVING.
+    rows = (
+        Member.objects
+        .annotate(tasks_count=Count("tasks"))
+        .filter(tasks_count__gte=minimum)
+        .order_by("-tasks_count", "name")
+    )
     context = {"members": rows, "minimum": minimum}
     return render(request, TEMPLATES + "workload.html", context)
 
 
 def stats(request):
-    """Общая статистика: итоги и количество задач по статусам."""
-    try:
-        totals = fetch_one(
-            "SELECT COUNT(*) AS total, "
-            "COUNT(CASE WHEN status = 'Выполнена' THEN 1 END) AS done "
-            "FROM tasks"
-        )
-        members_count = fetch_one(
-            "SELECT COUNT(*) AS members_count FROM members"
-        )
-        by_status = fetch_all(
-            "SELECT status, COUNT(*) AS tasks_count FROM tasks "
-            "GROUP BY status ORDER BY tasks_count DESC"
-        )
-    except FileNotFoundError:
-        return _no_database(request)
+    """Общая статистика: итоги, сроки и задачи по статусам."""
+    totals = Task.objects.aggregate(
+        total=Count("pk"),
+        done=Count("pk", filter=Q(status=Task.STATUS_DONE)),
+        first_due=Min("due_date"),
+        last_due=Max("due_date"),
+    )
+    by_status = (
+        Task.objects
+        .values("status")
+        .annotate(tasks_count=Count("pk"))
+        .order_by("-tasks_count", "status")
+    )
+    # Три ближайших срока среди невыполненных задач (срез QuerySet).
+    nearest = (
+        Task.objects
+        .select_related("project")
+        .exclude(status=Task.STATUS_DONE)
+        .exclude(due_date__isnull=True)
+        .order_by("due_date", "pk")[:3]
+    )
     context = {
         "totals": totals,
-        "members_count": members_count["members_count"],
+        "members_count": Member.objects.count(),
         "by_status": by_status,
+        "nearest": nearest,
     }
     return render(request, TEMPLATES + "stats.html", context)

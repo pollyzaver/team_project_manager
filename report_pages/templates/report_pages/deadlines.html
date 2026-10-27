@@ -35,7 +35,7 @@
           <a href="{% url 'tasks:detail' task.id %}">
             {{ task.task_name }}
           </a>
-          — срок {{ task.due_date }}, исполнитель
+          — срок {{ task.due_date|date:"d.m.Y" }}, исполнитель
           {{ task.assignee_name }}
         </li>
       {% empty %}

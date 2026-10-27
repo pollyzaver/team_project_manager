@@ -27,7 +27,7 @@
           <td>{{ task.project_name }}</td>
           <td>{{ task.assignee_name }}</td>
           <td>{{ task.status }}</td>
-          <td>{{ task.due_date|default:"не задан" }}</td>
+          <td>{{ task.due_date|date:"d.m.Y"|default:"не задан" }}</td>
         </tr>
       {% empty %}
         <tr><td colspan="5">Незавершённых задач нет.</td></tr>
