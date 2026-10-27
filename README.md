@@ -1,7 +1,7 @@
 # TeamProject Manager
 
 ## Назначение
-Приложение для управления командными проектами. Позволяет создавать проекты, назначать команды, ставить задачи и отслеживать их выполнение. Доступно в двух видах: консольное меню (ПР3) и веб-интерфейс на Django (ПР5, ПР6); данные для страниц отчётов берутся из базы SQLite (ПР7).
+Приложение для управления командными проектами. Позволяет создавать проекты, назначать команды, ставить задачи и отслеживать их выполнение. Доступно в двух видах: консольное меню (ПР3) и веб-интерфейс на Django (ПР5, ПР6); данные для страниц отчётов берутся из базы SQLite (ПР7); начиная с ПР9 веб-страницы получают данные через Django ORM из базы `db.sqlite3`.
 
 ## Целевая аудитория
 Руководители команд, тимлиды, участники проектных групп, желающие структурировать работу над проектами.
@@ -48,7 +48,8 @@
 ## Структура проекта
 - `manage.py` — точка входа Django (проверка конфигурации, запуск сервера);
 - `teamproject/` — конфигурационный пакет Django-проекта (`settings.py`, корневой `urls.py`, `wsgi.py`, `asgi.py`);
-- `homepage/`, `project_pages/`, `task_pages/` — Django-приложения (главная, страницы проектов, страницы задач); у каждого есть своя папка `templates/<приложение>/`;
+- `homepage/`, `project_pages/`, `task_pages/` — Django-приложения (главная, страницы проектов, страницы задач); у каждого есть своя папка `templates/<приложение>/`; в `project_pages/models.py` и `task_pages/models.py` лежат модели Django ORM `Project` и `Task` (ПР9);
+- `team_pages/` — приложение с моделями `Team` и `Member` (ПР9), страниц у него нет;
 - `templates/` — общие шаблоны проекта: `base.html`, `404.html`, `includes/navigation.html`;
 - `homepage/static/homepage/` — статические файлы: `css/style.css`, `js/main.js`, `img/logo.png`;
 - `main.py` — точка запуска, двухуровневое меню приложения (список/создание проектов снаружи, действия внутри выбранного проекта);
@@ -61,10 +62,11 @@
 - `tasks.py` — функции работы с коллекцией задач (`add_task`, `delete_task`, `update_task_status`, `count_completed_tasks`, `calculate_progress`, `filter_tasks_by_status`, `sort_tasks_by_status`, `sort_tasks_by_due_date`, `get_all_tasks`, `find_task_by_id`);
 - `storage.py` — загрузка и сохранение объектов в JSON (`load_all` загружает проекты вместе с задачами одним вызовом);
 - `utils.py` — вспомогательные функции безопасного ввода;
-- `db/` — работа с SQLite: `database.py` (соединение, `fetch_all`, `fetch_one`, создание таблиц) и `import_json.py` (перенос данных из JSON в базу);
+- `db/` — работа с SQLite: `database.py` (соединение, `fetch_all`, `fetch_one`, создание таблиц), `import_json.py` (перенос данных из JSON в базу ПР7), `inspect_source_db.py` (просмотр структуры базы ПР7) и `import_sqlite_to_orm.py` (перенос данных из базы ПР7 в таблицы Django ORM, ПР9);
 - `sql/` — SQL-файлы: `schema.sql` (создание таблиц) и `queries.sql` (запросы проекта);
 - `report_pages/` — Django-приложение «Отчёты»: страницы, данные которых получены SQL-запросами к SQLite;
-- `data/` — файлы данных (`projects.json` — список проектов с их командами, `tasks.json` — задачи, сгруппированные по названию проекта, `teamproject.sqlite` — база данных SQLite, создаётся командой импорта и в Git не хранится);
+- `data/` — файлы данных (`projects.json` — список проектов с их командами, `tasks.json` — задачи, сгруппированные по названию проекта, `teamproject.sqlite` — исходная база ПР7, создаётся командой импорта и в Git не хранится);
+- `db.sqlite3` — база данных Django (ПР9), создаётся командой `migrate`, в Git не хранится;
 - `tests/` — автоматизированные тесты.
 
 ## Формат хранения данных
@@ -100,6 +102,16 @@ python manage.py runserver
 python -m db.import_json
 
 Команду можно запускать повторно — таблицы очищаются и заполняются заново.
+
+База данных Django (ПР9): после клонирования применяются миграции и переносятся данные из базы ПР7:
+
+python manage.py migrate
+
+python -m db.import_json
+
+python -m db.import_sqlite_to_orm
+
+Перенос можно запускать повторно: записи ищутся по `id` и обновляются, дубликаты не создаются.
 
 
 ## Запуск тестов
@@ -182,13 +194,92 @@ HTML больше не формируется в Python: view-функции с�
 Значения из адресной строки передаются в запросы параметрами (`?`), а не подставляются в текст запроса. Путь данных: SQLite → SQL → `sqlite3` → view → context → шаблон → страница. Если базы ещё нет, страницы показывают подсказку выполнить `python -m db.import_json`.
 
 ### Текущее состояние
-Основные страницы `/projects/` и `/tasks/` пока берут данные из JSON; перевод всего проекта на базу данных и Django ORM планируется позже.
+После ПР9 все веб-страницы получают данные через Django ORM; файлы SQL-слоя (`sql/`, `db/database.py`, `db/import_json.py`) остаются в проекте как предыдущая реализация и источник данных для переноса.
+
+## Django ORM (ПР9)
+Слой данных веб-части переведён с `sqlite3` и JSON на Django ORM: таблицы описаны моделями, структурой базы управляют миграции, view-функции получают объекты через менеджер `objects`. Адреса, шаблоны и пользовательские сценарии ПР5–ПР7 сохранены. Консольное приложение (`main.py`) и JSON-хранилище работают как раньше.
+
+Путь данных: `view → Django ORM → SQL → SQLite (db.sqlite3) → объекты моделей → context → шаблон → HTML`.
+
+### Модели и связи
+| Модель (приложение) | Поля | Связи |
+|---|---|---|
+| `Project` (`project_pages`) | `name`, `description`, `manager`, `start_date`, `end_date`, `status` | — |
+| `Team` (`team_pages`) | `name` | `project` — `OneToOneField` на `Project`, `related_name="team"`, `CASCADE` |
+| `Member` (`team_pages`) | `name`, `role` | `team` — `ForeignKey` на `Team`, `related_name="members"`, `CASCADE` |
+| `Task` (`task_pages`) | `name`, `status`, `due_date` | `project` — `ForeignKey` на `Project`, `related_name="tasks"`, `PROTECT`; `assignee` — `ForeignKey` на `Member`, `related_name="tasks"`, `PROTECT` |
+
+- Первичный ключ `id` Django создаёт сам (`BigAutoField`).
+- Даты — `DateField`; срок задачи и даты проекта необязательны (`null=True, blank=True`).
+- Статус проекта и задачи ограничен списком `choices`.
+- `PROTECT` у задач запрещает удалять проект или участника, пока на них ссылаются задачи: история работы не теряется. Команда удаляется вместе с проектом, участник — вместе с командой (`CASCADE`).
+- Методы моделей: `Project.is_active()`, `Task.is_completed()`, `Task.get_status_text()`, `Task.complete()`.
+- Все модели зарегистрированы в админ-панели (`/admin/`, нужен `python manage.py createsuperuser`).
+
+### Стратегия перехода и перенос данных
+Выбран вариант 2: Django создаёт собственные таблицы в `db.sqlite3` (настройка `DATABASES` не менялась), а база ПР7 `data/teamproject.sqlite` остаётся нетронутым источником. Скрипт `db/import_sqlite_to_orm.py` читает её через `sqlite3` и создаёт записи через ORM (`update_or_create` по `id`, одна транзакция `transaction.atomic()`). Порядок: проекты → команды → участники → задачи. Даты переводятся из `ГГГГ-ММ-ДД` в `date`. `db/inspect_source_db.py` выводит структуру и число записей исходной базы (только чтение).
+
+### Миграции
+Файлы `0001_initial.py` лежат в `project_pages/migrations/`, `team_pages/migrations/`, `task_pages/migrations/` и хранятся в Git.
+
+python manage.py makemigrations
+
+python manage.py showmigrations
+
+python manage.py sqlmigrate task_pages 0001
+
+python manage.py migrate
+
+`makemigrations` только создаёт файлы с описанием изменений, `migrate` применяет их к базе и создаёт таблицы.
+
+### Страницы и запросы ORM
+| Страница | Что делает | Приёмы ORM |
+|---|---|---|
+| `/projects/?q=&status=&sort=` | поиск, фильтр по статусу, сортировка | `annotate(Count)`, `filter(Q(...) \| Q(...))`, `icontains`, `order_by` по словарю допустимых полей |
+| `/projects/<id>/` | карточка проекта, прогресс | `get_object_or_404`, `select_related("team")`, `prefetch_related`, `aggregate(Count, filter=Q)` |
+| `/tasks/?q=&project=&assignee=&status=&date=&sort=&page=` | список задач | `select_related`, `filter` по нескольким условиям и по внешним ключам, `Q` по полям связанных моделей, `due_date__lte`, `order_by(F().asc(nulls_last=True))`, `Paginator`, `{% querystring %}` |
+| `/tasks/<id>/` | карточка задачи | `get_object_or_404`, `select_related("project", "assignee")` |
+| `/reports/` | итоги и статусы | `aggregate(Count, Min, Max)`, `values().annotate(Count)`, `exclude()`, срез `[:3]` |
+| `/reports/projects/` | проекты и число задач | `annotate(Count)` от `Project` (проекты без задач остаются со значением 0), условный `Count(filter=~Q())` |
+| `/reports/tasks/` | незавершённые задачи | `exclude`, `annotate(F("project__name"))`, `values` |
+| `/reports/deadlines/?date=` | задачи до даты, свободные участники | `filter(due_date__lte)`, `values_list(flat=True)`, `exclude(pk__in=...)` |
+| `/reports/workload/?min=N` | нагрузка участников | `annotate(Count)` + `filter(tasks_count__gte)` (SQL `HAVING`) |
+
+Значения из адреса проверяются: некорректная дата, номер страницы или фильтр не вызывают ошибку, неизвестное значение `sort` заменяется сортировкой по умолчанию. Для несуществующего `id` возвращается 404. Поле сортировки выбирается из словаря допустимых вариантов, а не подставляется в `order_by()` как есть. Поиск `icontains` в SQLite не различает регистр только для латиницы, для кириллицы регистр учитывается.
+
+### Операции в Django shell
+python manage.py shell
+
+from project_pages.models import Project
+from team_pages.models import Member, Team
+from task_pages.models import Task
+
+project = Project.objects.create(name="Тест", manager="Я")
+team = Team.objects.create(name="Тест-команда", project=project)
+member = Member.objects.create(name="Тестер", role="QA", team=team)
+task = Task.objects.create(name="Задача", project=project, assignee=member)
+task.status = "Выполнена"
+task.save()
+Task.objects.get(pk=task.pk).status
+project.tasks.all()
+task.delete()
+
+### Проверка
+python manage.py check
+
+python manage.py makemigrations --check
+
+python manage.py showmigrations
+
+pytest -v
+
+flake8 . --extend-exclude=venv
 
 ## План развития проекта
 На следующих этапах планируется:
 - привязка задач к проекту по `id` проекта вместо названия;
 - связь «многие-ко-многим» между `Team` и `Member` (участник — в нескольких командах);
-- переход основных страниц на базу данных и Django ORM (SQLite/PostgreSQL);
+- формы создания и изменения проектов, команд и задач через веб-интерфейс;
 - реализация аутентификации пользователей;
 - разработка REST API для управления сущностями;
 - контейнеризация приложения с помощью Docker;
