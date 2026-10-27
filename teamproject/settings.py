@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "homepage",
     "project_pages",
+    "team_pages",
     "task_pages",
     "report_pages",
 ]
@@ -54,8 +55,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "teamproject.wsgi.application"
 
-# На этом этапе данные берутся из JSON-файлов (data/), база данных
-# пока не используется; настройка оставлена по умолчанию.
+# База данных Django (ПР9): модели и миграции работают с db.sqlite3.
+# Исходная база ПР7 (data/teamproject.sqlite) остаётся источником
+# данных: из неё их переносит db/import_sqlite_to_orm.py.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
